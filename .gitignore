@@ -1,0 +1,5 @@
+node_modules/
+dashboard-nextjs/node_modules/
+dashboard-nextjs/.next/
+*.log
+

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Progress Aplikasi Android</title>
+<style>
+*{box-sizing:border-box;font-family:'Segoe UI',Calibri,Arial,sans-serif}
+body{margin:0;background:#eef2f7;color:#1f2b3a}
+header{background:#1F4E79;color:#fff;padding:20px 24px}
+header h1{margin:0;font-size:22px}
+header p{margin:4px 0 0;opacity:.85;font-size:13px}
+.wrap{max-width:1200px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:16px}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.kpi{border-radius:10px;padding:14px;text-align:center;border:1px solid #d9e2f3}
+.kpi small{display:block;font-size:11px;font-weight:700;letter-spacing:.4px;color:#4a5a73}
+.kpi b{font-size:24px;color:#1F4E79}
+.kpi.green{background:#e6f4ea}.kpi.yellow{background:#fef7d8}.kpi.grey{background:#f2f2f2}.kpi.red{background:#fdecea}.kpi.blue{background:#ddebf7}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.toolbar select,.toolbar input{padding:8px 10px;border:1px solid #b4c6e7;border-radius:6px;font-size:13px}
+.btn{padding:8px 14px;border:0;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+.btn.primary{background:#2E75B6;color:#fff}.btn.dark{background:#1F4E79;color:#fff}.btn.light{background:#e7eef9;color:#1F4E79}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#1F4E79;color:#fff;padding:10px 8px;position:sticky;top:0}
+td{border:1px solid #d9e2f3;padding:6px 8px;vertical-align:middle;background:#fff}
+tr:nth-child(even) td{background:#f2f8ff}
+.bar{height:14px;background:#e3eaf5;border-radius:7px;overflow:hidden;min-width:140px}
+.bar>div{height:100%;background:linear-gradient(90deg,#2E75B6,#5aa0e3);border-radius:7px;transition:width .3s}
+.bar.done>div{background:linear-gradient(90deg,#1e9e50,#4ed07e)}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.s-Selesai{background:#c6efce;color:#006100}.s-Berjalan{background:#ffeb9c;color:#7a5200}.s-Belum{background:#eee;color:#555}.s-Tertunda,.s-Revisi{background:#ffc7ce;color:#9c0006}
+select.status,input.num,input.txt,input.dt{width:100%;padding:5px 6px;border:1px solid #b4c6e7;border-radius:5px;font-size:12px}
+input[type=range]{width:90px}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cat{border:1px solid #d9e2f3;border-radius:8px;padding:10px;background:#f8fbff}
+.cat b{font-size:13px}.cat .mini{height:8px;background:#e3eaf5;border-radius:4px;overflow:hidden;margin-top:6px}.cat .mini>div{height:100%;background:#2E75B6}
+footer{color:#666;font-size:12px;text-align:center;padding:12px}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(3,1fr)}.cat-grid{grid-template-columns:repeat(2,1fr)}table{font-size:12px}}
+@media print{.toolbar .btn,.toolbar input[type=text]{display:none}body{background:#fff}.card{box-shadow:none}}
+</style>
+</head>
+<body>
+<header>
+<h1>📊 Dashboard Progress Pembuatan Aplikasi Android</h1>
+<p>Spreadsheet interaktif + progress bar • Editan tersimpan otomatis • Buka file Excel (.xlsx) untuk versi spreadsheet penuh</p>
+</header>
+<div class="wrap">
+<div class="card">
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:end">
+<div><label>Nama Aplikasi</label><br><input id="appName" class="txt" style="padding:8px;border:1px solid #b4c6e7;border-radius:6px;width:240px" value="MyAndroidApp v1.0"></div>
+<div><label>Target Rilis</label><br><input id="release" type="date" value="2026-12-16" style="padding:8px;border:1px solid #b4c6e7;border-radius:6px"></div>
+<div style="margin-left:auto;display:flex;gap:8px">
+<button class="btn light" onclick="window.print()">🖨 Cetak</button>
+<button class="btn light" onclick="exportCSV()">⬇ Export CSV</button>
+<button class="btn light" onclick="resetData()">↺ Reset</button>
+</div>
+</div>
+</div>
+<div class="card">
+<div class="kpis">
+<div class="kpi blue"><small>TOTAL PROGRESS</small><b id="kTotal">0%</b></div>
+<div class="kpi"><small>TOTAL MODUL</small><b id="kModul">0</b></div>
+<div class="kpi green"><small>SELESAI</small><b id="kDone">0</b></div>
+<div class="kpi yellow"><small>BERJALAN</small><b id="kRun">0</b></div>
+<div class="kpi grey"><small>BELUM MULAI</small><b id="kTodo">0</b></div>
+<div class="kpi red"><small>TERTUNDA/REVISI</small><b id="kLate">0</b></div>
+</div>
+<div style="margin-top:12px"><div class="bar" id="totalBar"><div style="width:0%"></div></div></div>
+</div>
+<div class="card">
+<div class="toolbar">
+<select id="fCat"><option value="">Semua Kategori</option></select>
+<select id="fStatus"><option value="">Semua Status</option><option>Belum Mulai</option><option>Berjalan</option><option>Selesai</option><option>Tertunda</option><option>Revisi</option></select>
+<input type="text" id="fSearch" placeholder="🔍 Cari modul / PIC...">
+<button class="btn primary" onclick="addRow()">+ Tambah Modul</button>
+<span id="bobotWarn" style="font-size:12px;font-weight:700"></span>
+</div>
+<div style="overflow:auto;max-height:520px">
+<table>
+<thead><tr>
+<th>No</th><th>Modul / Fitur</th><th>Kategori</th><th>PIC</th><th>Bobot%</th><th>Target</th><th>Status</th><th>Progress</th><th style="min-width:180px">Progress Bar</th><th>Keterangan</th><th></th>
+</tr></thead>
+<tbody id="tbody"></tbody>
+<tfoot><tr>
+<td colspan="4" style="text-align:right;font-weight:800">TOTAL</td>
+<td id="tBobot" style="font-weight:800;text-align:center"></td>
+<td></td><td id="tDone" style="text-align:center;font-weight:700"></td>
+<td id="tProg" style="text-align:center;font-weight:800;color:#1F4E79"></td>
+<td colspan="3" style="font-size:12px;font-style:italic">Progress total = Σ(bobot × progress)</td>
+</tr></tfoot>
+</table>
+</div>
+</div>
+<div class="card"><h3 style="margin:0 0 10px">Rekap per Kategori</h3><div class="cat-grid" id="cats"></div></div>
+<footer>File Excel: <b>Dashboard-Progress-Aplikasi-Android.xlsx</b> (2 sheet: Dashboard + Progress Detail, dropdown, DataBar, filter, rumus otomatis) • HTML ini mirror interaktifnya.</footer>
+</div>
+<script>
+const DEFAULTS=[
+["Analisis Kebutuhan & Dokumen SRS","Perencanaan","Andi",5,"2026-09-30","Selesai",100,"Dokumen disetujui"],
+["Desain Wireframe & User Flow","UI/UX","Citra",6,"2026-10-07","Selesai",100,"Figma terlampir"],
+["Desain High-Fidelity UI (Figma)","UI/UX","Citra",7,"2026-10-14","Berjalan",75,"3 dari 12 layar revisi"],
+["Setup Project (Kotlin, Gradle, Git, Firebase)","Setup","Budi",5,"2026-10-10","Selesai",100,"Repo + CI ready"],
+["Splash Screen, Onboarding & Navigasi","Frontend","Budi",6,"2026-10-21","Berjalan",60,"Animasi 60%"],
+["Autentikasi (Login, Register, OTP, Google)","Frontend","Dewi",8,"2026-10-28","Berjalan",45,"Login OK, OTP integrasi"],
+["Dashboard / Home & Bottom Nav","Frontend","Budi",7,"2026-11-04","Berjalan",30,"Layout dasar jadi"],
+["Modul Profil & Pengaturan","Frontend","Eko",5,"2026-11-11","Belum Mulai",0,"Menunggu API user"],
+["Integrasi REST API (Retrofit/OkHttp)","Integrasi","Dewi",8,"2026-11-18","Berjalan",50,"50% endpoint OK"],
+["Database Lokal (Room) & Offline Mode","Backend","Eko",6,"2026-11-18","Belum Mulai",10,"Entity dirancang"],
+["Notifikasi Push (FCM)","Integrasi","Dewi",5,"2026-11-25","Belum Mulai",0,"Menunggu Firebase key"],
+["Upload File / Gambar & Media","Frontend","Budi",6,"2026-11-25","Belum Mulai",0,"-"],
+["Testing Unit, UI (Espresso) & QA","Testing","Tim QA",7,"2026-12-02","Belum Mulai",0,"-"],
+["UAT & Bug Fixing","Testing","Tim QA",7,"2026-12-09","Belum Mulai",0,"-"],
+["Optimasi Performa & Keamanan","Testing","Eko",5,"2026-12-12","Belum Mulai",0,"-"],
+["Build Release & Publish Play Store","Rilis","Andi",7,"2026-12-16","Belum Mulai",0,"-"]];
+let data=JSON.parse(localStorage.getItem('androidProg')||'null')||DEFAULTS.map(d=>({modul:d[0],kat:d[1],pic:d[2],bobot:d[3],target:d[4],status:d[5],prog:d[6],ket:d[7]}));
+function save(){localStorage.setItem('androidProg',JSON.stringify(data))}
+function pill(s){const c=s==='Selesai'?'s-Selesai':s==='Berjalan'?'s-Berjalan':s==='Belum Mulai'?'s-Belum':'s-Tertunda';return `<span class="pill ${c}">${s}</span>`}
+function render(){
+const fc=fCat.value,fs=fStatus.value,q=fSearch.value.toLowerCase();
+const tb=document.querySelector('#tbody');tb.innerHTML='';
+const cats=[...new Set(data.map(d=>d.kat))];
+fCat.innerHTML='<option value="">Semua Kategori</option>'+cats.map(c=>`<option ${fc===c?'selected':''}>${c}</option>`).join('');
+let totB=0,totW=0,done=0,run=0,todo=0,late=0;
+data.forEach((d,i)=>{totB+=+d.bobot||0;totW+=(+d.bobot||0)*(+d.prog||0)/100;
+if(d.status==='Selesai')done++;else if(d.status==='Berjalan')run++;else if(d.status==='Belum Mulai')todo++;else late++;});
+kTotal.textContent=totW.toFixed(1)+'%';document.querySelector('#totalBar div').style.width=Math.min(100,totW)+'%';
+document.querySelector('#totalBar').className='bar'+(totW>=100?' done':'');
+kModul.textContent=data.length;kDone.textContent=done;kRun.textContent=run;kTodo.textContent=todo;kLate.textContent=late;
+tBobot.textContent=totB+'%';tDone.textContent=done+' selesai';tProg.textContent=totW.toFixed(1)+'%';
+bobotWarn.textContent=totB===100?'✔ Bobot 100%':`⚠ Bobot ${totB}% (harus 100%)`;
+bobotWarn.style.color=totB===100?'green':'red';
+data.forEach((d,i)=>{
+if(fc&&d.kat!==fc)return;if(fs&&d.status!==fs)return;
+if(q&&!(d.modul+d.pic+d.kat).toLowerCase().includes(q))return;
+const tr=document.createElement('tr');
+tr.innerHTML=`<td style="text-align:center">${i+1}</td>
+<td><input class="txt" value="${esc(d.modul)}" data-k="modul" data-i="${i}"></td>
+<td><input class="txt" value="${esc(d.kat)}" data-k="kat" data-i="${i}"></td>
+<td><input class="txt" value="${esc(d.pic)}" data-k="pic" data-i="${i}"></td>
+<td><input class="num" type="number" min="0" max="100" value="${d.bobot}" data-k="bobot" data-i="${i}" style="text-align:center"></td>
+<td><input class="dt" type="date" value="${d.target}" data-k="target" data-i="${i}"></td>
+<td><select class="status" data-k="status" data-i="${i}">${['Belum Mulai','Berjalan','Selesai','Tertunda','Revisi'].map(s=>`<option ${s===d.status?'selected':''}>${s}</option>`).join('')}</select><div style="margin-top:4px;text-align:center">${pill(d.status)}</div></td>
+<td style="text-align:center"><input type="range" min="0" max="100" value="${d.prog}" data-k="prog" data-i="${i}"><br><b>${d.prog}%</b></td>
+<td><div class="bar ${d.prog>=100?'done':''}"><div style="width:${d.prog}%"></div></div><small>${'█'.repeat(Math.round(d.prog/10))} ${d.prog}%</small></td>
+<td><input class="txt" value="${esc(d.ket)}" data-k="ket" data-i="${i}"></td>
+<td><button class="btn light" onclick="delRow(${i})">✕</button></td>`;
+tb.appendChild(tr);});
+tb.querySelectorAll('input,select').forEach(el=>el.onchange=e=>{
+const i=+e.target.dataset.i,k=e.target.dataset.k;let v=e.target.value;
+if(k==='bobot'||k==='prog')v=+v;
+if(k==='status'&&v==='Selesai')data[i].prog=100;
+if(k==='prog'){if(v>=100)data[i].status='Selesai';else if(v>0&&data[i].status==='Selesai')data[i].status='Berjalan';else if(v>0&&data[i].status==='Belum Mulai')data[i].status='Berjalan';}
+data[i][k]=v;save();render();});
+tb.querySelectorAll('input.txt').forEach(el=>el.oninput=e=>{data[+e.target.dataset.i][e.target.dataset.k]=e.target.value;save();});
+// rekap kategori
+const cg=document.querySelector('#cats');cg.innerHTML='';
+cats.forEach(c=>{const rows=data.filter(d=>d.kat===c);const avg=rows.length?rows.reduce((a,b)=>a+(+b.prog||0),0)/rows.length:0;
+const dn=rows.filter(r=>r.status==='Selesai').length;
+cg.innerHTML+=`<div class="cat"><b>${esc(c)}</b><div style="font-size:12px">${dn}/${rows.length} selesai • rata-rata ${avg.toFixed(0)}%</div><div class="mini"><div style="width:${avg}%"></div></div></div>`;});
+}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')}
+function addRow(){data.push({modul:'Modul baru',kat:'Frontend',pic:'-',bobot:0,target:'2026-12-01',status:'Belum Mulai',prog:0,ket:'-'});save();render()}
+function delRow(i){if(confirm('Hapus baris ini?')){data.splice(i,1);save();render()}}
+function resetData(){if(confirm('Kembalikan ke contoh awal?')){localStorage.removeItem('androidProg');location.reload()}}
+function exportCSV(){const h=['No','Modul','Kategori','PIC','Bobot%','Target','Status','Progress%','Keterangan'];
+const rows=data.map((d,i)=>[i+1,`"${d.modul}"`,d.kat,d.pic,d.bobot,d.target,d.status,d.prog,`"${d.ket}"`]);
+const csv=h.join(';')+'\n'+rows.map(r=>r.join(';')).join('\n');
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='progress-android.csv';a.click();}
+['fCat','fStatus','fSearch'].forEach(id=>document.getElementById(id).oninput=render);
+render();
+</script>
+</body>
+</html>
